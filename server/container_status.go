@@ -64,6 +64,10 @@ func (s *Server) ContainerStatus(ctx context.Context, req *types.ContainerStatus
 		cState = c.State()
 	}
 
+	if c.Spoofed(){
+		log.Infof(ctx, "Current Spoofed container status %s: %s", c.ID(), cState.Status)
+	}
+	
 	resp.Status.CreatedAt = c.CreatedAt().UnixNano()
 	switch cState.Status {
 	case oci.ContainerStateCreated:

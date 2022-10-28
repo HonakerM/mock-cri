@@ -273,6 +273,7 @@ func (r *runtimeOCI) StartContainer(ctx context.Context, c *Container) error {
 	defer c.opLock.Unlock()
 
 	if c.Spoofed() {
+		c.state.Started = time.Now()
 		return nil
 	}
 
