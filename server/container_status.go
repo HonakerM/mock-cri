@@ -64,6 +64,7 @@ func (s *Server) ContainerStatus(ctx context.Context, req *types.ContainerStatus
 		cState = c.State()
 	}
 
+	// TODO CASE REMOVE DEBUG
 	if c.Spoofed(){
 		log.Infof(ctx, "Current Spoofed container status %s: %s", c.ID(), cState.Status)
 	}

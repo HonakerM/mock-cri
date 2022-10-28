@@ -80,6 +80,12 @@ func (s *Server) ListContainers(ctx context.Context, req *types.ListContainersRe
 		c := ctr.CRIContainer()
 		cState := ctr.StateNoLock()
 
+		// TODO CASE REMOVE DEBUG
+		if ctr.Spoofed(){
+			log.Infof(ctx, "Current Spoofed container status %s: %s", ctr.ID(), cState.Status)
+		}
+
+
 		rState := types.ContainerState_CONTAINER_UNKNOWN
 		switch cState.Status {
 		case oci.ContainerStateCreated:
