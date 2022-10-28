@@ -274,6 +274,7 @@ func (r *runtimeOCI) StartContainer(ctx context.Context, c *Container) error {
 
 	if c.Spoofed() {
 		c.state.Started = time.Now()
+		c.state.Status = ContainerStateRunning
 		return nil
 	}
 
