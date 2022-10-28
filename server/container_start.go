@@ -16,15 +16,25 @@ import (
 func (s *Server) StartContainer(ctx context.Context, req *types.StartContainerRequest) (retErr error) {
 	log.Infof(ctx, "Starting container: %s", req.ContainerId)
 	c, err := s.GetContainerFromShortID(req.ContainerId)
+	sandbox := s.getSandbox(c.Sandbox())
 	if err != nil {
 		return status.Errorf(codes.NotFound, "could not find container %q: %v", req.ContainerId, err)
+	}
+
+	if c.spoofed {
+		log.WithFields(ctx, map[string]interface{}{
+			"description": c.Description(),
+			"containerID": c.ID(),
+			"sandboxID":   sandbox.ID(),
+			"PID":         state.Pid,
+		}).Infof("Started spoofed container")
+		return nil
 	}
 	state := c.State()
 	if state.Status != oci.ContainerStateCreated {
 		return fmt.Errorf("container %s is not in created state: %s", c.ID(), state.Status)
 	}
-
-	sandbox := s.getSandbox(c.Sandbox())
+	
 	hooks, err := runtimehandlerhooks.GetRuntimeHandlerHooks(ctx, &s.config, sandbox.RuntimeHandler(), sandbox.Annotations())
 	if err != nil {
 		return fmt.Errorf("failed to get runtime handler %q hooks", sandbox.RuntimeHandler())
