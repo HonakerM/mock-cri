@@ -916,9 +916,7 @@ func (r *runtimeOCI) UpdateContainerStatus(ctx context.Context, c *Container) er
 	if c.Spoofed() {
 		old_status := c.state.Status
 		status := old_status
-		if c.created && old_status == "" {
-			status = ContainerStateCreated
-		} else if c.state.Started.IsZero() && old_status == ContainerStateCreated  {
+		if c.state.Started.IsZero() && old_status == ContainerStateCreated  {
 			status = ContainerStateRunning
 		} else if c.state.Started.IsZero() && c.state.Finished.IsZero() {
 			if c.state.Started.After(c.state.Finished) {
