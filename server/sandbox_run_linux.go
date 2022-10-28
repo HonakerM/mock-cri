@@ -13,7 +13,7 @@ import (
 	current "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/containers/podman/v3/pkg/annotations"
 	"github.com/containers/podman/v3/pkg/rootless"
-	selinux "github.com/containers/podman/v3/pkg/selinux"
+	//selinux "github.com/containers/podman/v3/pkg/selinux"
 	"github.com/containers/storage"
 	"github.com/containers/storage/pkg/idtools"
 	"github.com/cri-o/cri-o/internal/config/node"
@@ -878,14 +878,17 @@ func (s *Server) runPodSandbox(ctx context.Context, req *types.RunPodSandboxRequ
 		return nil, err
 	}
 
+	var container *oci.Container
+
 	// A container is kernel separated if we're using shimv2, or we're using a kata v1 binary
+	/*
 	podIsKernelSeparated := runtimeType == libconfig.RuntimeTypeVM ||
 		strings.Contains(strings.ToLower(runtimeHandler), "kata") ||
 		(runtimeHandler == "" && strings.Contains(strings.ToLower(s.config.DefaultRuntime), "kata"))
 
-	var container *oci.Container
+	
 	// In the case of kernel separated containers, we need the infra container to create the VM for the pod
-	/*if sb.NeedsInfra(s.config.DropInfraCtr) || podIsKernelSeparated {
+	if sb.NeedsInfra(s.config.DropInfraCtr) || podIsKernelSeparated {
 		log.Debugf(ctx, "Keeping infra container for pod %s", sbox.ID())
 		container, err = oci.NewContainer(sbox.ID(), containerName, podContainer.RunDir, logPath, labels, g.Config.Annotations, kubeAnnotations, s.config.PauseImage, "", "", nil, sbox.ID(), false, false, false, runtimeHandler, podContainer.Dir, created, podContainer.Config.Config.StopSignal)
 		if err != nil {
