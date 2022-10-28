@@ -915,14 +915,13 @@ func (r *runtimeOCI) UpdateContainerStatus(ctx context.Context, c *Container) er
 
 	if c.Spoofed() {
 		old_status := c.state.Status
-		if c.created && old_status == nil {
+		status := old_status
+		if c.created && old_status == "" {
 			status = ContainerStateCreated
-		} 
-		
-		if c.state.Started != nil && old_status == ContainerStateCreated  {
+		} else if c.state.Started.IsZero() && old_status == ContainerStateCreated  {
 			status = ContainerStateRunning
-		} else if c.state.Started != nil && c.state.Finished != nil {
-			if c.state.Started > c.state.Finished {
+		} else if c.state.Started.IsZero() && c.state.Finished.IsZero() {
+			if c.state.Started.After(c.state.Finished) {
 				status = ContainerStateRunning
 			}
 		}

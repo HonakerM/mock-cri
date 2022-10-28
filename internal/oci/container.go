@@ -149,6 +149,7 @@ func NewContainer(id, name, bundlePath, logPath string, labels, crioAnnotations,
 func NewSpoofedRunTimeContainer(id, name string, bundlePath, logPath string, labels, crioAnnotations, annotations map[string]string, image, imageName, imageRef string, metadata *types.ContainerMetadata, sandbox string, terminal, stdin, stdinOnce bool, runtimeHandler, dir string, created time.Time, stopSignal string) (*Container, error) {
 		state := &ContainerState{}
 		state.Created = created
+		state.Status = ""
 		state.Started = nil
 
 		annotations[ann.SpoofedContainer] = "true"
