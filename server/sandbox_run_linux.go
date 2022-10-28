@@ -873,15 +873,15 @@ func (s *Server) runPodSandbox(ctx context.Context, req *types.RunPodSandboxRequ
 		}
 	}
 
+	/*
 	runtimeType, err := s.Runtime().RuntimeType(runtimeHandler)
 	if err != nil {
 		return nil, err
 	}
 
-	var container *oci.Container
 
 	// A container is kernel separated if we're using shimv2, or we're using a kata v1 binary
-	/*
+	
 	podIsKernelSeparated := runtimeType == libconfig.RuntimeTypeVM ||
 		strings.Contains(strings.ToLower(runtimeHandler), "kata") ||
 		(runtimeHandler == "" && strings.Contains(strings.ToLower(s.config.DefaultRuntime), "kata"))
@@ -913,6 +913,7 @@ func (s *Server) runPodSandbox(ctx context.Context, req *types.RunPodSandboxRequ
 	}*/
 	//Always spoof infra container
 	log.Debugf(ctx, "Spoofing infra container for pod %s", sbox.ID())
+	var container *oci.Container
 	container = oci.NewSpoofedContainer(sbox.ID(), containerName, labels, sbox.ID(), created, podContainer.RunDir)
 	g.AddAnnotation(ann.SpoofedContainer, "true")
 	if err := s.config.CgroupManager().CreateSandboxCgroup(cgroupParent, sbox.ID()); err != nil {
