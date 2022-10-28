@@ -22,7 +22,7 @@ func (s *Server) StartContainer(ctx context.Context, req *types.StartContainerRe
 
 	sandbox := s.getSandbox(c.Sandbox())
 	state := c.State()	
-
+	/*
 	if c.Spoofed() {
 		log.WithFields(ctx, map[string]interface{}{
 			"description": c.Description(),
@@ -31,7 +31,7 @@ func (s *Server) StartContainer(ctx context.Context, req *types.StartContainerRe
 			"PID":         state.Pid,
 		}).Infof("Started spoofed container")
 		return nil
-	}
+	}*/
 	
 	if state.Status != oci.ContainerStateCreated {
 		return fmt.Errorf("container %s is not in created state: %s", c.ID(), state.Status)

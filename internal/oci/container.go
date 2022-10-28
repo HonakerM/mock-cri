@@ -149,7 +149,8 @@ func NewContainer(id, name, bundlePath, logPath string, labels, crioAnnotations,
 func NewSpoofedRunTimeContainer(id, name string, bundlePath, logPath string, labels, crioAnnotations, annotations map[string]string, image, imageName, imageRef string, metadata *types.ContainerMetadata, sandbox string, terminal, stdin, stdinOnce bool, runtimeHandler, dir string, created time.Time, stopSignal string) (*Container, error) {
 		state := &ContainerState{}
 		state.Created = created
-		state.Started = created
+		state.Started = nil
+
 		annotations[ann.SpoofedContainer] = "true"
 		c := &Container{
 			criContainer: &types.Container{
@@ -612,6 +613,12 @@ func (c *Container) SetAsStopping(timeout int64) (alreadyStopping bool) {
 	// First, need to check if the container is already stopping
 	c.stopLock.Lock()
 	defer c.stopLock.Unlock()
+
+	if c.spoofed {
+		c.stopping = true
+		c.stopStoppingChan = make(chan struct{}, 1)
+		return false
+	}
 	if c.stopping {
 		// If so, we shouldn't wait forever on the opLock.
 		// This can cause issues where the container stop gets DOSed by a very long

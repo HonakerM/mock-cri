@@ -82,6 +82,7 @@ type exitCodeInfo struct {
 // CreateContainer creates a container.
 func (r *runtimeOCI) CreateContainer(ctx context.Context, c *Container, cgroupParent string) (retErr error) {
 	if c.Spoofed() {
+		c.state.SetInitPid(1)
 		return nil
 	}
 
@@ -274,7 +275,6 @@ func (r *runtimeOCI) StartContainer(ctx context.Context, c *Container) error {
 
 	if c.Spoofed() {
 		c.state.Started = time.Now()
-		c.state.Status = ContainerStateRunning
 		return nil
 	}
 
@@ -914,6 +914,20 @@ func (r *runtimeOCI) UpdateContainerStatus(ctx context.Context, c *Container) er
 	defer c.opLock.Unlock()
 
 	if c.Spoofed() {
+		old_status := c.state.Status
+		if c.created && old_status == nil {
+			status = ContainerStateCreated
+		} 
+		
+		if c.state.Started != nil && old_status == ContainerStateCreated  {
+			status = ContainerStateRunning
+		} else if c.state.Started != nil && c.state.Finished != nil {
+			if c.state.Started > c.state.Finished {
+				status = ContainerStateRunning
+			}
+		}
+		log.Infof(ctx, "Updating spoofed container status %s : %s",c.ID(),status)
+		c.state.Status = status
 		return nil
 	}
 
