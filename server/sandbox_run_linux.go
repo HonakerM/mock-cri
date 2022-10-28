@@ -885,7 +885,7 @@ func (s *Server) runPodSandbox(ctx context.Context, req *types.RunPodSandboxRequ
 
 	var container *oci.Container
 	// In the case of kernel separated containers, we need the infra container to create the VM for the pod
-	if sb.NeedsInfra(s.config.DropInfraCtr) || podIsKernelSeparated {
+	/*if sb.NeedsInfra(s.config.DropInfraCtr) || podIsKernelSeparated {
 		log.Debugf(ctx, "Keeping infra container for pod %s", sbox.ID())
 		container, err = oci.NewContainer(sbox.ID(), containerName, podContainer.RunDir, logPath, labels, g.Config.Annotations, kubeAnnotations, s.config.PauseImage, "", "", nil, sbox.ID(), false, false, false, runtimeHandler, podContainer.Dir, created, podContainer.Config.Config.StopSignal)
 		if err != nil {
@@ -907,6 +907,13 @@ func (s *Server) runPodSandbox(ctx context.Context, req *types.RunPodSandboxRequ
 		if err := s.config.CgroupManager().CreateSandboxCgroup(cgroupParent, sbox.ID()); err != nil {
 			return nil, errors.Wrapf(err, "create dropped infra %s cgroup", sbox.ID())
 		}
+	}*/
+	//Always spoof infra container
+	log.Debugf(ctx, "Spoofing infra container for pod %s", sbox.ID())
+	container = oci.NewSpoofedContainer(sbox.ID(), containerName, labels, sbox.ID(), created, podContainer.RunDir)
+	g.AddAnnotation(ann.SpoofedContainer, "true")
+	if err := s.config.CgroupManager().CreateSandboxCgroup(cgroupParent, sbox.ID()); err != nil {
+		return nil, errors.Wrapf(err, "create spoofed infra %s cgroup", sbox.ID())
 	}
 	container.SetMountPoint(mountPoint)
 	container.SetSpec(g.Config)

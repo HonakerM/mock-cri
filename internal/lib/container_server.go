@@ -230,7 +230,7 @@ func (c *ContainerServer) LoadSandbox(ctx context.Context, id string) (sb *sandb
 		return sb, err
 	}
 
-	sandboxDir, err := c.store.ContainerDirectory(id)
+	_, err := c.store.ContainerDirectory(id)
 	if err != nil {
 		return sb, err
 	}
@@ -251,11 +251,11 @@ func (c *ContainerServer) LoadSandbox(ctx context.Context, id string) (sb *sandb
 
 	// We should not take whether the server currently has DropInfraCtr specified, but rather
 	// whether the server used to.
+	/*
 	wasSpoofed := false
 	if spoofed, ok := m.Annotations[crioann.SpoofedContainer]; ok && spoofed == "true" {
 		wasSpoofed = true
 	}
-
 	if !wasSpoofed {
 		scontainer, err = oci.NewContainer(m.Annotations[annotations.ContainerID], cname, sandboxPath, m.Annotations[annotations.LogPath], labels, m.Annotations, kubeAnnotations, m.Annotations[annotations.Image], "", "", nil, id, false, false, false, sb.RuntimeHandler(), sandboxDir, created, m.Annotations["org.opencontainers.image.stopSignal"])
 		if err != nil {
@@ -263,7 +263,8 @@ func (c *ContainerServer) LoadSandbox(ctx context.Context, id string) (sb *sandb
 		}
 	} else {
 		scontainer = oci.NewSpoofedContainer(cID, cname, labels, id, created, sandboxPath)
-	}
+	}*/
+	scontainer = oci.NewSpoofedContainer(cID, cname, labels, id, created, sandboxPath)
 	scontainer.SetSpec(&m)
 	scontainer.SetMountPoint(m.Annotations[annotations.MountPoint])
 
