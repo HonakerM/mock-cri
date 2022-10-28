@@ -7,9 +7,9 @@
 		"image": "quay.io/crio/redis:alpine"
 	},
 	"command": [
-		"/bin/ls"
+		"/bin/sleep"
 	],
-	"args": [],
+	"args": ["10000"],
 	"working_dir": "/",
 	"envs": [
 		{
