@@ -16,12 +16,14 @@ import (
 func (s *Server) StartContainer(ctx context.Context, req *types.StartContainerRequest) (retErr error) {
 	log.Infof(ctx, "Starting container: %s", req.ContainerId)
 	c, err := s.GetContainerFromShortID(req.ContainerId)
-	sandbox := s.getSandbox(c.Sandbox())
 	if err != nil {
 		return status.Errorf(codes.NotFound, "could not find container %q: %v", req.ContainerId, err)
 	}
 
-	if c.spoofed {
+	sandbox := s.getSandbox(c.Sandbox())
+	state := c.State()	
+
+	if c.Spoofed() {
 		log.WithFields(ctx, map[string]interface{}{
 			"description": c.Description(),
 			"containerID": c.ID(),
@@ -30,7 +32,7 @@ func (s *Server) StartContainer(ctx context.Context, req *types.StartContainerRe
 		}).Infof("Started spoofed container")
 		return nil
 	}
-	state := c.State()
+	
 	if state.Status != oci.ContainerStateCreated {
 		return fmt.Errorf("container %s is not in created state: %s", c.ID(), state.Status)
 	}
