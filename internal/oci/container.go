@@ -148,8 +148,8 @@ func NewContainer(id, name, bundlePath, logPath string, labels, crioAnnotations,
 
 func NewSpoofedRunTimeContainer(id, name string, bundlePath, logPath string, labels, crioAnnotations, annotations map[string]string, image, imageName, imageRef string, metadata *types.ContainerMetadata, sandbox string, terminal, stdin, stdinOnce bool, runtimeHandler, dir string, created time.Time, stopSignal string) (*Container, error) {
 		state := &ContainerState{}
-		state.Created = created
 		state.Status = ContainerStateCreated
+		state.Created = created
 		state.Started = time.Time{}
 
 		annotations[ann.SpoofedContainer] = "true"
@@ -189,7 +189,7 @@ func NewSpoofedRunTimeContainer(id, name string, bundlePath, logPath string, lab
 func NewSpoofedContainer(id, name string, labels map[string]string, sandbox string, created time.Time, dir string) *Container {
 	state := &ContainerState{}
 	state.Created = created
-	state.Started = created
+	state.Status = ContainerStateCreated
 	c := &Container{
 		criContainer: &types.Container{
 			Id:           id,
