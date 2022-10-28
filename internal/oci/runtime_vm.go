@@ -678,6 +678,16 @@ func (r *runtimeVM) updateContainerStatus(ctx context.Context, c *Container) err
 		status = ContainerStatePaused
 	}
 
+	if c.Spoofed(){
+		if c.created && status != ContainerStateStopped {
+			status = ContainerStateRunning
+		} else if status == ContainerStateStopped  {
+			status = ContainerStateStopped
+		}
+
+		log.Warnf(ctx, "Updating status of spoofed container to: %s. Task status was %s", status, response.Status)
+	}
+
 	c.state.Status = status
 	c.state.Finished = response.ExitedAt
 	exitCode := int32(response.ExitStatus)
