@@ -230,7 +230,7 @@ func (c *ContainerServer) LoadSandbox(ctx context.Context, id string) (sb *sandb
 		return sb, err
 	}
 
-	_, err := c.store.ContainerDirectory(id)
+	_, err = c.store.ContainerDirectory(id)
 	if err != nil {
 		return sb, err
 	}
