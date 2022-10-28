@@ -150,7 +150,7 @@ func NewSpoofedRunTimeContainer(id, name string, bundlePath, logPath string, lab
 		state := &ContainerState{}
 		state.Created = created
 		state.Status = ""
-		state.Started = nil
+		state.Started = time.Time{}
 
 		annotations[ann.SpoofedContainer] = "true"
 		c := &Container{
