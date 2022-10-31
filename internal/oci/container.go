@@ -514,7 +514,8 @@ func (c *Container) pid() (int, error) {
 	}
 
 	// container has stopped (as pid is initialized but the runc state has overwritten it)
-	if c.state.Pid == 0 {
+	// only care if not spoofed
+	if !c.spoofed && c.state.Pid == 0 {
 		return 0, ErrNotFound
 	}
 
