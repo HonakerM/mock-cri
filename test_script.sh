@@ -1,7 +1,9 @@
 echo "building images"
-go build  -trimpath  -ldflags '-s -w -X github.com/cri-o/cri-o/internal/pkg/criocli.DefaultsPath="" -X github.com/cri-o/cri-o/internal/version.buildDate='2022-10-28T18:45:45Z' -X github.com/cri-o/cri-o/internal/version.gitCommit=d089da942be6c9cb9ddaa5e455631ad997b8bb9a -X github.com/cri-o/cri-o/internal/version.gitTreeState=clean ' -tags "" -o bin/crio github.com/cri-o/cri-o/cmd/crio
-go build  -trimpath  -ldflags '-s -w -X github.com/cri-o/cri-o/internal/pkg/criocli.DefaultsPath="" -X github.com/cri-o/cri-o/internal/version.buildDate='2022-10-28T18:45:52Z' -X github.com/cri-o/cri-o/internal/version.gitCommit=d089da942be6c9cb9ddaa5e455631ad997b8bb9a -X github.com/cri-o/cri-o/internal/version.gitTreeState=clean ' -tags "" -o bin/crio-status github.com/cri-o/cri-o/cmd/crio-status
-make -C pinns
+go build  -trimpath  -ldflags '-s -w -X github.com/cri-o/cri-o/internal/pkg/criocli.DefaultsPath="" -X github.com/cri-o/cri-o/internal/version.buildDate='2022-10-31T17:43:40Z' -X github.com/cri-o/cri-o/internal/version.gitCommit=6abd91c8003aca68d855f45723f0bca4b7a6c260 -X github.com/cri-o/cri-o/internal/version.gitTreeState=clean ' -tags "containers_image_ostree_stub      containers_image_openpgp seccomp selinux " -o bin/crio github.com/cri-o/cri-o/cmd/crio
+go build  -trimpath  -ldflags '-s -w -X github.com/cri-o/cri-o/internal/pkg/criocli.DefaultsPath="" -X github.com/cri-o/cri-o/internal/version.buildDate='2022-10-31T17:43:55Z' -X github.com/cri-o/cri-o/internal/version.gitCommit=6abd91c8003aca68d855f45723f0bca4b7a6c260 -X github.com/cri-o/cri-o/internal/version.gitTreeState=clean ' -tags "containers_image_ostree_stub      containers_image_openpgp seccomp selinux " -o bin/crio-status github.com/cri-o/cri-o/cmd/crio-status
+cd pinns
+cc -o ../bin/pinns src/sysctl.o src/pinns.o -std=c99 -Os -Wall -Werror -Wextra -static
+cd ..
 ./bin/crio -d "" --config=""  config > crio.conf
 
 
