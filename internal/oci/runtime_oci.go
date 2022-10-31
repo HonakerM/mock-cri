@@ -97,7 +97,10 @@ func (r *runtimeOCI) CreateContainer(ctx context.Context, c *Container, cgroupPa
 		if err != nil {
 			return fmt.Errorf("error creating spoofed process: %v", err)
 		}
-		c.state.SetInitPid(cmd.Process.Pid)
+		logrus.Infof("Setting spoofed Pid to %d", cmd.Process.Pid)
+		if err := c.state.SetInitPid(cmd.Process.Pid); err != nil {
+			return err
+		}
 		return nil
 	}
 

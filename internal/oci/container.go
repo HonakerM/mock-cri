@@ -152,7 +152,10 @@ func NewSpoofedRunTimeContainer(id, name string, bundlePath, logPath string, lab
 		state.Created = created
 		state.Started = time.Time{}
 
-		annotations[ann.SpoofedContainer] = "true"
+		if annotations == nil {
+           annotations = make(map[string]string)
+           annotations[ann.SpoofedContainer] = "true"
+       }
 		c := &Container{
 			criContainer: &types.Container{
 				Id:           id,
