@@ -81,12 +81,27 @@ type exitCodeInfo struct {
 
 // CreateContainer creates a container.
 func (r *runtimeOCI) CreateContainer(ctx context.Context, c *Container, cgroupParent string) (retErr error) {
+	var stderrBuf bytes.Buffer
+
 	if c.Spoofed() {
-		c.state.SetInitPid(1)
+		cmd := cmdrunner.Command("/bin/sleep","infinity") // nolint: gosec
+		cmd.Dir = c.bundlePath
+		cmd.SysProcAttr = sysProcAttrPlatform()
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if c.terminal {
+			cmd.Stderr = &stderrBuf
+		}
+		err := cmd.Start()
+		if err != nil {
+			return fmt.Errorf("error creating spoofed process: %v", err)
+		}
+		c.state.SetInitPid(cmd.Process.Pid)
 		return nil
 	}
 
-	var stderrBuf bytes.Buffer
+	
 	parentPipe, childPipe, err := newPipe()
 	if err != nil {
 		return fmt.Errorf("error creating socket pair: %v", err)
@@ -918,11 +933,7 @@ func (r *runtimeOCI) UpdateContainerStatus(ctx context.Context, c *Container) er
 		status := old_status
 		if !c.state.Started.IsZero() && old_status == ContainerStateCreated  {
 			status = ContainerStateRunning
-		} else if !c.state.Started.IsZero() && !c.state.Finished.IsZero() {
-			if c.state.Started.After(c.state.Finished) {
-				status = ContainerStateRunning
-			}
-		}
+		} 
 		log.Infof(ctx, "Updating spoofed container status %s : %s",c.ID(),status)
 		c.state.Status = status
 		return nil
