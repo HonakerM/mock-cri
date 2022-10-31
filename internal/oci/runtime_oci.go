@@ -452,7 +452,10 @@ func (r *runtimeOCI) ExecContainer(ctx context.Context, c *Container, cmd []stri
 // ExecSyncContainer execs a command in a container and returns it's stdout, stderr and return code.
 func (r *runtimeOCI) ExecSyncContainer(ctx context.Context, c *Container, command []string, timeout int64) (*types.ExecSyncResponse, error) {
 	if c.Spoofed() {
-		return nil, nil
+		return nil, &ExecSyncError{
+			ExitCode: -1,
+			Err:      errors.New("Can't ExecSync Spoofed Container"),
+		}
 	}
 
 	pidFile, parentPipe, childPipe, err := prepareExec()
