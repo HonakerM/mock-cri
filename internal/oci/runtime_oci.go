@@ -372,7 +372,7 @@ func parseLog(ctx context.Context, l []byte) (stdout, stderr []byte) {
 // ExecContainer prepares a streaming endpoint to execute a command in the container.
 func (r *runtimeOCI) ExecContainer(ctx context.Context, c *Container, cmd []string, stdin io.Reader, stdout, stderr io.WriteCloser, tty bool, resize <-chan remotecommand.TerminalSize) error {
 	if c.Spoofed() {
-		return nil
+		return errors.New("Can't Exec Spoofed Container")
 	}
 
 	processFile, err := prepareProcessExec(c, cmd, tty)
@@ -1128,8 +1128,8 @@ func (r *runtimeOCI) signalContainer(c *Container, sig syscall.Signal, all bool)
 
 // AttachContainer attaches IO to a running container.
 func (r *runtimeOCI) AttachContainer(ctx context.Context, c *Container, inputStream io.Reader, outputStream, errorStream io.WriteCloser, tty bool, resize <-chan remotecommand.TerminalSize) error {
-	if c.Spoofed() {
-		return nil
+	if c.Spoofed(){
+		return errors.New("Can't Attach IO to Spoofed Container")
 	}
 
 	controlPath := filepath.Join(c.BundlePath(), "ctl")
@@ -1209,6 +1209,10 @@ func (r *runtimeOCI) PortForwardContainer(ctx context.Context, c *Container, net
 	log.Infof(ctx,
 		"Starting port forward for %s in network namespace %s", c.ID(), netNsPath,
 	)
+	if c.Spoofed(){
+		return errors.New("Can't Port Forward Spoofed Container")
+	}
+
 
 	// Adapted reference implementation:
 	// https://github.com/containerd/cri/blob/8c366d/pkg/server/sandbox_portforward_unix.go#L65-L120
