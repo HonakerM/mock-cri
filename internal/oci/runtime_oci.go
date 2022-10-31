@@ -82,7 +82,7 @@ type exitCodeInfo struct {
 // CreateContainer creates a container.
 func (r *runtimeOCI) CreateContainer(ctx context.Context, c *Container, cgroupParent string) (retErr error) {
 	var stderrBuf bytes.Buffer
-
+	var pid int
 	if c.Spoofed() {
 		cmd := cmdrunner.Command("/bin/sleep","infinity") // nolint: gosec
 		cmd.Dir = c.bundlePath
@@ -97,8 +97,9 @@ func (r *runtimeOCI) CreateContainer(ctx context.Context, c *Container, cgroupPa
 		if err != nil {
 			return fmt.Errorf("error creating spoofed process: %v", err)
 		}
-		logrus.Infof("Setting spoofed Pid to %d", cmd.Process.Pid)
-		if err := c.state.SetInitPid(cmd.Process.Pid); err != nil {
+		pid = cmd.Process.Pid
+		logrus.Infof("Setting spoofed Pid to %d", pid)
+		if err := c.state.SetInitPid(pid); err != nil {
 			return err
 		}
 		return nil
@@ -257,7 +258,7 @@ func (r *runtimeOCI) CreateContainer(ctx context.Context, c *Container, cgroupPa
 		ch <- syncStruct{si: si}
 	}()
 
-	var pid int
+	
 	select {
 	case ss := <-ch:
 		if ss.err != nil {
