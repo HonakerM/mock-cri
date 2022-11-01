@@ -63,6 +63,7 @@ COPY --from=build /conmon/bin/conmon /usr/local/bin/conmon
 
 # config
 COPY --from=build /src/crio.conf /etc/crio/crio.conf
+COPY --from=build /src/contrib/systemd/crio.service /usr/local/lib/systemd/system/crio.service
 COPY --from=build /src/crictl.yaml /etc
 
 ENTRYPOINT [ "/usr/local/bin/crio" ]

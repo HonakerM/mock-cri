@@ -377,7 +377,7 @@ codecov:
 localintegration: clean binaries test-binaries
 	./test/test_runner.sh ${TESTFLAGS}
 
-IMAGE := "mockcrio:latest"
+IMAGE := "mockcrio/mockcrio:latest"
 docker.build:
 	docker build --tag ${IMAGE} .
 	
