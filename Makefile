@@ -377,6 +377,13 @@ codecov:
 localintegration: clean binaries test-binaries
 	./test/test_runner.sh ${TESTFLAGS}
 
+IMAGE := "mockcrio:latest"
+docker.build:
+	docker build --tag ${IMAGE} .
+	
+docker.run: docker.build
+	docker run --rm --privileged --name mockcrio ${IMAGE}
+
 binaries: bin/crio bin/crio-status bin/pinns
 test-binaries: test/copyimg/copyimg test/checkseccomp/checkseccomp
 
