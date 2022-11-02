@@ -1,29 +1,30 @@
-FROM ubuntu:22.04 as base
+FROM centos:centos7 as base
 
-
-
-RUN apt-get update -qq && apt-get install -y curl gpg
-
-RUN apt-get update -qq && apt-get install -y \
-  libbtrfs-dev \
+RUN yum install -y \
+  containers-common \
+  iptables-service \
+  device-mapper-devel \
+  wget \
   git \
-  golang-go \
-  libassuan-dev \
-  libdevmapper-dev \
-  libglib2.0-dev \
-  libc6-dev \
-  libgpgme-dev \
-  libgpg-error-dev \
-  libseccomp-dev \
-  libsystemd-dev \
-  libselinux1-dev \
-  pkg-config \
-  go-md2man \
-  libudev-dev \
-  software-properties-common \
   gcc \
-  make
+  glib2-devel \
+  glibc-devel \
+  glibc-static \
+  gpgme-devel \
+  libassuan-devel \
+  libgpg-error-devel \
+  libseccomp-devel \
+  btrfs-progs-devel \
+  libselinux-devel \
+  pkgconfig \
+  make \
+  runc
 
+RUN  wget https://go.dev/dl/go1.19.2.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.19.2.linux-amd64.tar.gz && \
+    rm -rf go1.19.2.linux-amd64.tar.gz
+
+ENV PATH=$PATH:/usr/local/go/bin
 
 FROM base as build
 

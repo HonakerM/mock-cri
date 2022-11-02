@@ -377,12 +377,22 @@ codecov:
 localintegration: clean binaries test-binaries
 	./test/test_runner.sh ${TESTFLAGS}
 
-IMAGE := "mockcrio/mockcrio:latest"
+CRIO_IMAGE := "mchonaker/mockcrio:latest"
 docker.build:
-	docker build --tag ${IMAGE} .
+	docker build --tag ${CRIO_IMAGE} .
 	
 docker.run: docker.build
-	docker run --rm --privileged --name mockcrio ${IMAGE}
+	docker run --rm --privileged --name mockcrio ${CRIO_IMAGE}
+
+KIND_DIR := ${PWD}/contrib/kind
+KIND_IMAGE := "mchonaker/kindnode:latest"
+kind.build:
+	cd ${KIND_DIR} && \
+	docker build --tag ${KIND_IMAGE} .
+
+kind.run:
+	cd ${KIND_DIR} && \
+	kind create cluster --config kind.yaml --image ${KIND_IMAGE}
 
 binaries: bin/crio bin/crio-status bin/pinns
 test-binaries: test/copyimg/copyimg test/checkseccomp/checkseccomp
@@ -559,3 +569,4 @@ metrics-exporter: bin/metrics-exporter
 	get-script \
 	check-log-lines \
 	verify-dependencies
+
