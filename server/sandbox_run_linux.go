@@ -13,7 +13,7 @@ import (
 	current "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/containers/podman/v3/pkg/annotations"
 	"github.com/containers/podman/v3/pkg/rootless"
-	//selinux "github.com/containers/podman/v3/pkg/selinux"
+	selinux "github.com/containers/podman/v3/pkg/selinux"
 	"github.com/containers/storage"
 	"github.com/containers/storage/pkg/idtools"
 	"github.com/cri-o/cri-o/internal/config/node"
@@ -886,11 +886,11 @@ func (s *Server) runPodSandbox(ctx context.Context, req *types.RunPodSandboxRequ
 		(runtimeHandler == "" && strings.Contains(strings.ToLower(s.config.DefaultRuntime), "kata"))
 
 	spoofContainer := s.config.Spoofed && stringInSlice(sbox.Name(), s.config.SoofedPassThrough) 
-	
+	var container *oci.Container
+
 	if spoofContainer {
 		//Always spoof infra container
 		log.Debugf(ctx, "Spoofing infra container for pod %s", sbox.ID())
-		var container *oci.Container
 		container = oci.NewSpoofedContainer(sbox.ID(), containerName, labels, sbox.ID(), created, podContainer.RunDir)
 		g.AddAnnotation(ann.SpoofedContainer, "true")
 		if err := s.config.CgroupManager().CreateSandboxCgroup(cgroupParent, sbox.ID()); err != nil {

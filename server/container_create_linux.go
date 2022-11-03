@@ -776,7 +776,8 @@ func (s *Server) createSandboxContainer(ctx context.Context, ctr ctrfactory.Cont
 	
 	spoofContainer := s.config.Spoofed && stringInSlice(sb.Name(), s.config.SoofedPassThrough) 
 
-	ociContainer := nil
+	ociContainer = &oci.Container{}
+
 	if spoofContainer {
 		ociContainer, err = oci.NewSpoofedRunTimeContainer(containerID, containerName, containerInfo.RunDir, logPath, labels, crioAnnotations, ctr.Config().Annotations, image, imageName, imageRef, criMetadata, sb.ID(), containerConfig.Tty, containerConfig.Stdin, containerConfig.StdinOnce, sb.RuntimeHandler(), containerInfo.Dir, created, containerImageConfig.Config.StopSignal)
 	} else {
