@@ -37,6 +37,15 @@ func validateLabels(labels map[string]string) error {
 	return nil
 }
 
+func stringInSlice(a string, list []string) bool {
+    for _, b := range list {
+        if b == a {
+            return true
+        }
+    }
+    return false
+}
+
 func mergeEnvs(imageConfig *v1.Image, kubeEnvs []*types.KeyValue) []string {
 	envs := []string{}
 	if kubeEnvs == nil && imageConfig != nil {

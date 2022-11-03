@@ -774,11 +774,20 @@ func (s *Server) createSandboxContainer(ctx context.Context, ctr ctrfactory.Cont
 		Attempt: metadata.Attempt,
 	}
 	
-	ociContainer, err := oci.NewSpoofedRunTimeContainer(containerID, containerName, containerInfo.RunDir, logPath, labels, crioAnnotations, ctr.Config().Annotations, image, imageName, imageRef, criMetadata, sb.ID(), containerConfig.Tty, containerConfig.Stdin, containerConfig.StdinOnce, sb.RuntimeHandler(), containerInfo.Dir, created, containerImageConfig.Config.StopSignal)
-	/*ociContainer, err := oci.NewContainer(containerID, containerName, containerInfo.RunDir, logPath, labels, crioAnnotations, ctr.Config().Annotations, image, imageName, imageRef, criMetadata, sb.ID(), containerConfig.Tty, containerConfig.Stdin, containerConfig.StdinOnce, sb.RuntimeHandler(), containerInfo.Dir, created, containerImageConfig.Config.StopSignal)
-	if err != nil {
-		return nil, err
-	}*/
+	spoofContainer := s.config.Spoofed && stringInSlice(sb.Name(), s.config.SoofedPassThrough) 
+
+	ociContainer := nil
+	if spoofContainer {
+		ociContainer, err = oci.NewSpoofedRunTimeContainer(containerID, containerName, containerInfo.RunDir, logPath, labels, crioAnnotations, ctr.Config().Annotations, image, imageName, imageRef, criMetadata, sb.ID(), containerConfig.Tty, containerConfig.Stdin, containerConfig.StdinOnce, sb.RuntimeHandler(), containerInfo.Dir, created, containerImageConfig.Config.StopSignal)
+	} else {
+		ociContainer, err = oci.NewContainer(containerID, containerName, containerInfo.RunDir, logPath, labels, crioAnnotations, ctr.Config().Annotations, image, imageName, imageRef, criMetadata, sb.ID(), containerConfig.Tty, containerConfig.Stdin, containerConfig.StdinOnce, sb.RuntimeHandler(), containerInfo.Dir, created, containerImageConfig.Config.StopSignal)
+		if err != nil {
+			return nil, err
+		}
+	}
+	
+	/*
+	*/
 
 	specgen.SetLinuxMountLabel(mountLabel)
 	specgen.SetProcessSelinuxLabel(processLabel)
