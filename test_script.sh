@@ -4,8 +4,6 @@ go build  -trimpath  -ldflags '-s -w -X github.com/cri-o/cri-o/internal/pkg/crio
 cd pinns
 cc -o ../bin/pinns src/sysctl.o src/pinns.o -std=c99 -Os -Wall -Werror -Wextra -static
 cd ..
-./bin/crio -d "" --config=""  config > crio.conf
-
  read -t 3 -n 1
 
 echo "Installing binaries"
@@ -29,6 +27,14 @@ install -Z -D -m 644 contrib/systemd/crio.service /usr/local/lib/systemd/system/
 install -Z -D -m 644 contrib/systemd/crio-wipe.service /usr/local/lib/systemd/system/crio-wipe.service
 install -Z -d /usr/local/share/containers/oci/hooks.d
 install -Z -d /etc/crio/crio.conf.d
+
+cat <<<'
+[crio.runtime]
+Spoofed = true
+SoofedPassThrough = ["kube-controller-manager-kind-control-plane","etcd-kind-control-plane"]
+' > crio.conf
+
+
 install -Z -D -m 644 crio.conf /etc/crio/crio.conf
 install -Z -D -m 644 crio-umount.conf /usr/local/share/oci-umount/oci-umount.d/crio-umount.conf
 install -Z -D -m 644 crictl.yaml /etc
