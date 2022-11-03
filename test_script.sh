@@ -6,6 +6,7 @@ cc -o ../bin/pinns src/sysctl.o src/pinns.o -std=c99 -Os -Wall -Werror -Wextra -
 cd ..
 ./bin/crio -d "" --config=""  config > crio.conf
 
+ read -t 3 -n 1
 
 echo "Installing binaries"
 install -Z -D -m 755 bin/crio /usr/local/bin/crio
