@@ -38,7 +38,10 @@ func validateLabels(labels map[string]string) error {
 }
 
 func stringInSlice(a string, list []string) bool {
+
     for _, b := range list {
+		//todo remove
+		logrus.Debugf("Checking if string %s is equal to %s",a, b)
         if b == a {
             return true
         }
