@@ -885,7 +885,7 @@ func (s *Server) runPodSandbox(ctx context.Context, req *types.RunPodSandboxRequ
 		strings.Contains(strings.ToLower(runtimeHandler), "kata") ||
 		(runtimeHandler == "" && strings.Contains(strings.ToLower(s.config.DefaultRuntime), "kata"))
 
-	spoofContainer := s.config.Spoofed && stringInSlice(sbox.Name(), s.config.SoofedPassThrough) 
+	spoofContainer := s.config.Spoofed && !stringInSlice(sbox.Name(), s.config.SoofedPassThrough) 
 	var container *oci.Container
 
 	if spoofContainer {

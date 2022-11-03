@@ -774,7 +774,7 @@ func (s *Server) createSandboxContainer(ctx context.Context, ctr ctrfactory.Cont
 		Attempt: metadata.Attempt,
 	}
 	
-	spoofContainer := s.config.Spoofed && stringInSlice(sb.Name(), s.config.SoofedPassThrough) 
+	spoofContainer := s.config.Spoofed && !stringInSlice(sb.Name(), s.config.SoofedPassThrough) 
 
 	ociContainer := &oci.Container{}
 
