@@ -377,6 +377,9 @@ codecov:
 localintegration: clean binaries test-binaries
 	./test/test_runner.sh ${TESTFLAGS}
 
+tmpdir:
+	mkdir -p ${PWD}/.tmp
+
 CRIO_IMAGE := "mchonaker/mockcrio:latest"
 docker.build:
 	docker build --tag ${CRIO_IMAGE} .
@@ -386,11 +389,11 @@ docker.run: docker.build
 
 KIND_DIR := ${PWD}/contrib/kind
 KIND_IMAGE := "mchonaker/kindnode:latest"
-kind.build:
+kind.build: 
 	cd ${KIND_DIR} && \
 	docker build --tag ${KIND_IMAGE} .
 
-kind.run:
+kind.run: tmpdir
 	cd ${KIND_DIR} && \
 	kind create cluster --config kind.yaml --image ${KIND_IMAGE}
 
