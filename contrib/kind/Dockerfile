@@ -27,9 +27,11 @@ COPY --from=mchonaker/mockcrio:latest /usr/local/bin/pinns /usr/local/bin/pinns
 COPY --from=mchonaker/mockcrio:latest /usr/local/bin/conmon /usr/local/bin/conmon
 COPY --from=mchonaker/mockcrio:latest /etc/crictl.yaml /etc/crictl.yaml
 COPY --from=mchonaker/mockcrio:latest /etc/containers/policy.json /etc/containers/policy.json
+COPY --from=mchonaker/mockcrio:latest /etc/cni/net.d/10-kindnet.conflist /etc/cni/net.d/10-kindnet.conflist
 
 # Copy crio conf
 COPY crio.conf /etc/crio/crio.conf
+COPY registries.conf /etc/containers/registries.conf
 
 RUN systemctl disable containerd \
  && systemctl enable crio

@@ -15,9 +15,9 @@ nodes:
     kind: JoinConfiguration
     nodeRegistration:
       criSocket: unix:///var/run/crio/crio.sock
-- role: worker
-  kubeadmConfigPatches:
-  - |
-    kind: JoinConfiguration
-    nodeRegistration:
-      criSocket: unix:///var/run/crio/crio.sock
+#- role: worker
+#  kubeadmConfigPatches:
+#  - |
+#    kind: JoinConfiguration
+#    nodeRegistration:
+#      criSocket: unix:///var/run/crio/crio.sock
