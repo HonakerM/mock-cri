@@ -30,8 +30,8 @@ install -Z -d /etc/crio/crio.conf.d
 
 cat <<<'
 [crio.runtime]
-Spoofed = true
-SoofedPassThrough = [
+spoofed = true
+spoof_pass_through = [
     "kube-controller-manager-kind-control-plane",
     "etcd-kind-control-plane",
     "spoofpod",

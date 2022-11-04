@@ -1,7 +1,5 @@
 FROM ubuntu:22.04 as base
 
-
-
 RUN apt-get update -qq && apt-get install -y curl gpg
 
 RUN apt-get update -qq && apt-get install -y \
@@ -23,6 +21,8 @@ RUN apt-get update -qq && apt-get install -y \
   software-properties-common \
   gcc \
   make \
+  wget \
+  iptables iproute2 ethtool socat util-linux mount ebtables \
   runc
 
 
@@ -30,14 +30,27 @@ FROM base as build
 
 WORKDIR /src
 
+# Install Crictl
+RUN wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.25.0/crictl-v1.25.0-linux-amd64.tar.gz && \
+    tar zxvf crictl-v1.25.0-linux-amd64.tar.gz -C /usr/local/bin
+
+# Download and Install cni plugins
+RUN git clone https://github.com/containernetworking/plugins && \
+    cd plugins && \
+    git checkout v1.1.1 && \
+    ./build_linux.sh && \
+    mkdir -p /opt/cni/bin && \
+    cp bin/* /opt/cni/bin/
+
 COPY ./pinns /src/pinns
 
 WORKDIR /src/pinns
 
 # pinns build
-RUN cc  -O3 -o src/sysctl.o -c src/sysctl.c -std=c99 && \
+RUN mkdir -p /src/bin && \
+    cc  -O3 -o src/sysctl.o -c src/sysctl.c -std=c99 && \
     cc  -O3 -o src/pinns.o -c src/pinns.c -std=c99 && \
-    cc -o ../bin/pinns src/sysctl.o src/pinns.o -std=c99 -Os -Wall -Werror -Wextra -static
+    cc -o /src/bin/pinns src/sysctl.o src/pinns.o -std=c99 -Os -Wall -Werror -Wextra -static
 
 # conmon install
 WORKDIR /conmon
@@ -66,11 +79,14 @@ COPY --from=build /src/bin/crio /usr/local/bin/crio
 COPY --from=build /src/bin/crio-status /usr/local/bin/crio-status
 COPY --from=build /src/bin/pinns /usr/local/bin/pinns
 COPY --from=build /conmon/bin/conmon /usr/local/bin/conmon
+COPY --from=build /usr/local/bin/crictl /usr/local/bin/crictl
+COPY --from=build /opt/cni/bin/ /opt/cni/bin/
 
 # config
 COPY --from=build /src/crio.conf /etc/crio/crio.conf
 COPY --from=build /src/contrib/systemd/crio.service /usr/local/lib/systemd/system/crio.service
-COPY --from=build /src/contrib/policy.json /etc/containers/contrib/policy.json
+COPY --from=build /src/contrib/cni/10-kindnet.conflist /etc/cni/net.d/10-kindnet.conflist
+COPY --from=build /src/contrib/policy.json /etc/containers/policy.json
 COPY --from=build /src/crictl.yaml /etc
 
 ENTRYPOINT [ "/usr/local/bin/crio" ]
