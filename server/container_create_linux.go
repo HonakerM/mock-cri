@@ -777,7 +777,7 @@ func (s *Server) createSandboxContainer(ctx context.Context, ctr ctrfactory.Cont
 	spoofContainer := s.config.Spoofed && !stringInSlice(sb.Name(), s.config.SoofedPassThrough) 
 
 	ociContainer := &oci.Container{}
-
+	logrus.Debugf("Spoofed config value: %t with pass through [%s]",s.config.Spoofed, strings.Join(s.config.SoofedPassThrough," "))
 	if spoofContainer {
 		logrus.Debugf("Creating Spoofed container %s with sandbox name %s", containerName, sb.Name())
 		ociContainer, err = oci.NewSpoofedRunTimeContainer(containerID, containerName, containerInfo.RunDir, logPath, labels, crioAnnotations, ctr.Config().Annotations, image, imageName, imageRef, criMetadata, sb.ID(), containerConfig.Tty, containerConfig.Stdin, containerConfig.StdinOnce, sb.RuntimeHandler(), containerInfo.Dir, created, containerImageConfig.Config.StopSignal)
