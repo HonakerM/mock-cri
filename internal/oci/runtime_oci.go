@@ -81,11 +81,32 @@ type exitCodeInfo struct {
 
 // CreateContainer creates a container.
 func (r *runtimeOCI) CreateContainer(ctx context.Context, c *Container, cgroupParent string) (retErr error) {
+	var stderrBuf bytes.Buffer
+	var pid int
 	if c.Spoofed() {
+		// Start sleep command to create process space for container
+		cmd := cmdrunner.Command("/bin/sleep","infinity") // nolint: gosec
+		cmd.Dir = c.bundlePath
+		cmd.SysProcAttr = sysProcAttrPlatform()
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if c.terminal {
+			cmd.Stderr = &stderrBuf
+		}
+		err := cmd.Start()
+		if err != nil {
+			return fmt.Errorf("error creating spoofed process: %v", err)
+		}
+		pid = cmd.Process.Pid
+		logrus.Infof("Setting spoofed Pid to %d", pid)
+		if err := c.state.SetInitPid(pid); err != nil {
+			return err
+		}
 		return nil
 	}
 
-	var stderrBuf bytes.Buffer
+	
 	parentPipe, childPipe, err := newPipe()
 	if err != nil {
 		return fmt.Errorf("error creating socket pair: %v", err)
@@ -238,7 +259,7 @@ func (r *runtimeOCI) CreateContainer(ctx context.Context, c *Container, cgroupPa
 		ch <- syncStruct{si: si}
 	}()
 
-	var pid int
+	
 	select {
 	case ss := <-ch:
 		if ss.err != nil {
@@ -273,6 +294,7 @@ func (r *runtimeOCI) StartContainer(ctx context.Context, c *Container) error {
 	defer c.opLock.Unlock()
 
 	if c.Spoofed() {
+		c.state.Started = time.Now()
 		return nil
 	}
 
@@ -351,6 +373,7 @@ func parseLog(ctx context.Context, l []byte) (stdout, stderr []byte) {
 // ExecContainer prepares a streaming endpoint to execute a command in the container.
 func (r *runtimeOCI) ExecContainer(ctx context.Context, c *Container, cmd []string, stdin io.Reader, stdout, stderr io.WriteCloser, tty bool, resize <-chan remotecommand.TerminalSize) error {
 	if c.Spoofed() {
+		log.Debugf(ctx, "Can't Exec Spoofed Container")
 		return nil
 	}
 
@@ -431,7 +454,12 @@ func (r *runtimeOCI) ExecContainer(ctx context.Context, c *Container, cmd []stri
 // ExecSyncContainer execs a command in a container and returns it's stdout, stderr and return code.
 func (r *runtimeOCI) ExecSyncContainer(ctx context.Context, c *Container, command []string, timeout int64) (*types.ExecSyncResponse, error) {
 	if c.Spoofed() {
-		return nil, nil
+		log.Debugf(ctx, "Can't ExecSync Spoofed Container")
+		return &types.ExecSyncResponse{
+			Stdout:   []byte{},
+			Stderr:   []byte{},
+			ExitCode: 0,
+		}, nil
 	}
 
 	pidFile, parentPipe, childPipe, err := prepareExec()
@@ -912,6 +940,11 @@ func (r *runtimeOCI) UpdateContainerStatus(ctx context.Context, c *Container) er
 	defer c.opLock.Unlock()
 
 	if c.Spoofed() {
+		status := c.state.Status
+		if !c.state.Started.IsZero() && status == ContainerStateCreated  {
+			status = ContainerStateRunning
+		} 
+		c.state.Status = status
 		return nil
 	}
 
@@ -1097,8 +1130,8 @@ func (r *runtimeOCI) signalContainer(c *Container, sig syscall.Signal, all bool)
 
 // AttachContainer attaches IO to a running container.
 func (r *runtimeOCI) AttachContainer(ctx context.Context, c *Container, inputStream io.Reader, outputStream, errorStream io.WriteCloser, tty bool, resize <-chan remotecommand.TerminalSize) error {
-	if c.Spoofed() {
-		return nil
+	if c.Spoofed(){
+		return errors.New("Can't Attach IO to Spoofed Container")
 	}
 
 	controlPath := filepath.Join(c.BundlePath(), "ctl")
@@ -1178,6 +1211,10 @@ func (r *runtimeOCI) PortForwardContainer(ctx context.Context, c *Container, net
 	log.Infof(ctx,
 		"Starting port forward for %s in network namespace %s", c.ID(), netNsPath,
 	)
+	if c.Spoofed(){
+		return errors.New("Can't Port Forward Spoofed Container")
+	}
+
 
 	// Adapted reference implementation:
 	// https://github.com/containerd/cri/blob/8c366d/pkg/server/sandbox_portforward_unix.go#L65-L120
