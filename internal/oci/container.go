@@ -152,10 +152,53 @@ func NewContainer(id, name, bundlePath, logPath string, labels, crioAnnotations,
 	return c, nil
 }
 
+func NewSpoofedRunTimeContainer(id, name string, bundlePath, logPath string, labels, crioAnnotations, annotations map[string]string, image, imageName, imageRef string, metadata *types.ContainerMetadata, sandbox string, terminal, stdin, stdinOnce bool, runtimeHandler, dir string, created time.Time, stopSignal string) (*Container, error) {
+		state := &ContainerState{}
+		state.Status = ContainerStateCreated
+		state.Created = created
+		state.Started = time.Time{}
+
+		if annotations == nil {
+           annotations = make(map[string]string)
+           annotations[ann.SpoofedContainer] = "true"
+       }
+		c := &Container{
+			criContainer: &types.Container{
+				Id:           id,
+				CreatedAt:    created.UnixNano(),
+				Labels:       labels,
+				PodSandboxId: sandbox,
+				Metadata:     metadata,
+				Annotations: annotations,
+				Image: &types.ImageSpec{
+					Image: image,
+				},
+				ImageRef: imageRef,
+			},
+			name:             name,
+			bundlePath:       bundlePath,
+			logPath:          logPath,
+			terminal:         terminal,
+			stdin:            stdin,
+			stdinOnce:        stdinOnce,
+			runtimeHandler:   runtimeHandler,
+			crioAnnotations:  crioAnnotations,
+			imageName:        imageName,
+			dir:              dir,
+			state:            state,
+			spoofed: true,
+			stopSignal:       stopSignal,
+			stopTimeoutChan:  make(chan time.Duration, 1),
+			stoppedChan:      make(chan struct{}, 1),
+			stopStoppingChan: make(chan struct{}, 1),
+		}
+		return c, nil
+	}
+
 func NewSpoofedContainer(id, name string, labels map[string]string, sandbox string, created time.Time, dir string) *Container {
 	state := &ContainerState{}
 	state.Created = created
-	state.Started = created
+	state.Status = ContainerStateCreated
 	c := &Container{
 		criContainer: &types.Container{
 			Id:           id,
@@ -511,7 +554,7 @@ func (c *Container) pid() (int, error) {
 	}
 
 	// container has stopped (as pid is initialized but the runc state has overwritten it)
-	if c.state.Pid == 0 {
+	if !c.spoofed && c.state.Pid == 0 {
 		return 0, ErrNotFound
 	}
 
@@ -614,6 +657,12 @@ func (c *Container) SetAsStopping(timeout int64) (alreadyStopping bool) {
 	// First, need to check if the container is already stopping
 	c.stopLock.Lock()
 	defer c.stopLock.Unlock()
+
+	if c.spoofed {
+		c.stopping = true
+		c.stopStoppingChan = make(chan struct{}, 1)
+		return false
+	}
 	if c.stopping {
 		// If so, we shouldn't wait forever on the opLock.
 		// This can cause issues where the container stop gets DOSed by a very long
