@@ -234,7 +234,8 @@ func (s *Sandbox) nsPath(ns nsmgr.Namespace, nsType nsmgr.NSType) string {
 // if the infra container is nil, pid is returned negative
 func infraPid(infra *oci.Container) int {
 	pid := -1
-	if infra != nil && !infra.Spoofed() {
+
+	if infra != nil {
 		var err error
 		pid, err = infra.Pid()
 		// There are some cases where ErrNotInitialized is expected.

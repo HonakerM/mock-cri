@@ -165,6 +165,7 @@ type RootConfig struct {
 	// If set to false, one must use the external command `crio wipe` to wipe the containers and images in these situations.
 	// The option InternalWipe is deprecated, and will be removed in a future release.
 	InternalWipe bool `toml:"internal_wipe"`
+
 }
 
 // GetStore returns the container storage for a given configuration
@@ -232,6 +233,13 @@ type RuntimeConfig struct {
 
 	// DropInfraCtr determines whether the infra container is dropped when appropriate.
 	DropInfraCtr bool `toml:"drop_infra_ctr"`
+
+	//TODO Beter place for these?
+	// Spoofed is whether CRI-O should spoof everycontainer
+	Spoofed bool `toml:"spoofed"`
+	// SoofedPassThrough is a list of container names that CRIO will not spoofed
+	// TODO Beter names?
+	SoofedPassThrough []string `toml:"spoof_pass_through"`
 
 	// ReadOnly run all pods/containers in read-only mode.
 	// This mode will mount tmpfs on /run, /tmp and /var/tmp, if those are not mountpoints

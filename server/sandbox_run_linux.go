@@ -13,7 +13,6 @@ import (
 	current "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/containers/podman/v4/pkg/annotations"
 	"github.com/containers/podman/v4/pkg/rootless"
-	selinux "github.com/containers/podman/v4/pkg/selinux"
 	"github.com/containers/storage"
 	"github.com/containers/storage/pkg/idtools"
 	"github.com/cri-o/cri-o/internal/config/node"
@@ -878,36 +877,43 @@ func (s *Server) runPodSandbox(ctx context.Context, req *types.RunPodSandboxRequ
 		return nil, err
 	}
 
+
 	// A container is kernel separated if we're using shimv2, or we're using a kata v1 binary
+	
 	podIsKernelSeparated := runtimeType == libconfig.RuntimeTypeVM ||
 		strings.Contains(strings.ToLower(runtimeHandler), "kata") ||
 		(runtimeHandler == "" && strings.Contains(strings.ToLower(s.config.DefaultRuntime), "kata"))
 
+	spoofContainer := s.config.Spoofed && !stringOrRegexInSlice(sbox.Name(), s.config.SoofedPassThrough) 
 	var container *oci.Container
-	// In the case of kernel separated containers, we need the infra container to create the VM for the pod
-	if sb.NeedsInfra(s.config.DropInfraCtr) || podIsKernelSeparated {
-		log.Debugf(ctx, "Keeping infra container for pod %s", sbox.ID())
-		container, err = oci.NewContainer(sbox.ID(), containerName, podContainer.RunDir, logPath, labels, g.Config.Annotations, kubeAnnotations, s.config.PauseImage, "", "", nil, sbox.ID(), false, false, false, runtimeHandler, podContainer.Dir, created, podContainer.Config.Config.StopSignal)
-		if err != nil {
-			return nil, err
+
+	if spoofContainer {
+		// if sandbox is spoofed than spoof infra container
+		log.Debugf(ctx, "Spoofing infra container for pod %s", sbox.ID())
+		container = oci.NewSpoofedContainer(sbox.ID(), containerName, labels, sbox.ID(), created, podContainer.RunDir)
+		g.AddAnnotation(ann.SpoofedContainer, "true")
+		if err := s.config.CgroupManager().CreateSandboxCgroup(cgroupParent, sbox.ID()); err != nil {
+			return nil, fmt.Errorf("create spoofed infra %s cgroup: %w", sbox.ID(), err)
 		}
-		// If using a kernel separated container runtime, the process label should be set to container_kvm_t
-		// Keep in mind that kata does *not* apply any process label to containers within the VM
-		if podIsKernelSeparated {
-			processLabel, err = selinux.KVMLabel(processLabel)
+	} else {
+		// In the case of kernel separated containers, we need the infra container to create the VM for the pod
+		if sb.NeedsInfra(s.config.DropInfraCtr) || podIsKernelSeparated {
+			log.Debugf(ctx, "Keeping infra container for pod %s", sbox.ID())
+			container, err = oci.NewContainer(sbox.ID(), containerName, podContainer.RunDir, logPath, labels, g.Config.Annotations, kubeAnnotations, s.config.PauseImage, "", "", nil, sbox.ID(), false, false, false, runtimeHandler, podContainer.Dir, created, podContainer.Config.Config.StopSignal)
 			if err != nil {
 				return nil, err
 			}
 			g.SetProcessSelinuxLabel(processLabel)
-		}
-	} else {
-		log.Debugf(ctx, "Dropping infra container for pod %s", sbox.ID())
-		container = oci.NewSpoofedContainer(sbox.ID(), containerName, labels, sbox.ID(), created, podContainer.RunDir)
-		g.AddAnnotation(ann.SpoofedContainer, "true")
-		if err := s.config.CgroupManager().CreateSandboxCgroup(cgroupParent, sbox.ID()); err != nil {
-			return nil, fmt.Errorf("create dropped infra %s cgroup: %w", sbox.ID(), err)
+		} else {
+			log.Debugf(ctx, "Dropping infra container for pod %s", sbox.ID())
+			container = oci.NewSpoofedContainer(sbox.ID(), containerName, labels, sbox.ID(), created, podContainer.RunDir)
+			g.AddAnnotation(ann.SpoofedContainer, "true")
+			if err := s.config.CgroupManager().CreateSandboxCgroup(cgroupParent, sbox.ID()); err != nil {
+				return nil, fmt.Errorf("create dropped infra %s cgroup: %w", sbox.ID(), err)
+			}
 		}
 	}
+
 	container.SetMountPoint(mountPoint)
 	container.SetSpec(g.Config)
 
