@@ -1,3 +1,17 @@
+# Mock CRIO
+
+This Repository is a fork of [CRI-O](https://github.com/cri-o/cri-o) which adds support for entirely spoofed containers. These containers report status as usual and can be interacted with using `crictl`; however, they do not start `runc` containers saving resources and image pull time. This fork will also still verify image references, but it will start the container without waiting for the image to complete pulling. Another feature in the current build is the ability to pass through specific containers and run them as usual. For Kubernetes deployments, this allows starting core components like `etcd` and `kube-apiserver` but spoofing any other pods. The idea behind this functionality was to speed up the development and testing of [operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/), which require orchestrating a large number of pods that can have lengthy startup and image pull times. 
+
+To start testing out these changes first install a container runtime like docker or podman and then install [kind](https://github.com/kubernetes-sigs/kind). Once completed you can run the following make commands to startup a kind cluster using spoofed crio.
+```
+export CONTAINER_RUNTIME=<docker/podman>
+make image.build
+make kind.build
+make kind.run
+```
+
+There are a few bugs with the current `kind` implementation with the main issue being that spoofed containers do not respond to liveness probes and thus Kubernetes will enter a `CrashBackLoop`; however, the pod state will stay `Ready.`
+
 ![CRI-O logo](https://github.com/cri-o/cri-o/blob/main/logo/crio-logo.svg?raw=true)
 
 # CRI-O - OCI-based implementation of Kubernetes Container Runtime Interface
