@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"path/filepath"
 	"strings"
 	"time"
@@ -35,6 +36,19 @@ func validateLabels(labels map[string]string) error {
 		}
 	}
 	return nil
+}
+
+func stringOrRegexInSlice(a string, list []string) bool {
+    for _, b := range list {
+        if b == a {
+            return true
+        }
+		match, _ := regexp.MatchString(b, a)
+		if match {
+			return true
+		}
+    }
+    return false
 }
 
 func mergeEnvs(imageConfig *v1.Image, kubeEnvs []*types.KeyValue) []string {
